@@ -47,12 +47,40 @@ class HashMap<K, V> : MutableMap<K, V> {
     }
 
     inner class HashEntrySet : AbstractMutableSet<HashEntry<K, V>>() {
-        override var size: Int = MIN_SIZE
-        var array: Array<HashEntry<K, V>?> = Array(size) { null }
-
+        override var size: Int = 0
+        var array: Array<HashEntry<K, V>?> = Array(MIN_SIZE) { null }
 
         override fun add(element: HashEntry<K, V>): Boolean {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            val index = indexFor(element.hash, array.size)
+            if (array[index] == null) array[index] = element
+            else {
+                var nextIndex: Int? = null
+                for (i in index until array.size) {
+                    val currentElement = array[i]
+                    if (currentElement == null) nextIndex = i
+                    else if (currentElement.hash == element.hash && currentElement.key?.equals(element.key) ?: (element.key == null))
+                        return false
+                }
+                if (nextIndex == null)
+                    for (i in 0 until index) {
+                        val currentElement = array[i]
+                        if (currentElement == null) nextIndex = i
+                        else if (currentElement.hash == element.hash && currentElement.key?.equals(element.key) ?: (element.key == null))
+                            return false
+                    }
+                array[nextIndex!!] = element
+            }
+            if (++size == array.size) increaseArray()
+            return true
+        }
+
+        private fun indexFor(hash: Int, size: Int): Int = hash and (size - 1)
+
+        private fun increaseArray() {
+            val oldArray = array
+            array = Array(array.size * 2) { null }
+            size = 0
+            oldArray.forEach { add(it!!) }
         }
 
         override fun iterator(): HashMutableIterator = HashMutableIterator()
