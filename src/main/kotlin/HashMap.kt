@@ -2,6 +2,7 @@ class HashMap<K, V> : MutableMap<K, V> {
 
     companion object {
         const val MIN_SIZE = 16
+        const val DELETED = true
     }
 
     override val size: Int
@@ -57,64 +58,67 @@ class HashMap<K, V> : MutableMap<K, V> {
 
     inner class HashEntrySet : AbstractMutableSet<MutableMap.MutableEntry<K, V>>() {
         override var size: Int = 0
-        var array: Array<MutableMap.MutableEntry<K, V>?> = Array(MIN_SIZE) { null }
+        var array: Array<Any?> = Array(MIN_SIZE) { null }
 
         override fun add(element: MutableMap.MutableEntry<K, V>): Boolean {
-            val index = indexFor(element.key?.hashCode(), array.size)
-            if (array[index] == null) array[index] = element
-            else {
-                var nextIndex: Int? = null
-                for (i in index until array.size) {
-                    val currentElement = array[i]
-                    if (currentElement == null) nextIndex = i
-                    else if (currentElement.key?.hashCode() == element.key?.hashCode() && currentElement.key?.equals(element.key) ?: (element.key == null))
-                        return false
-                }
-                if (nextIndex == null)
-                    for (i in 0 until index) {
-                        val currentElement = array[i]
-                        if (currentElement == null) nextIndex = i
-                        else if (currentElement.key?.hashCode() == element.key?.hashCode() && currentElement.key?.equals(element.key) ?: (element.key == null))
-                            return false
-                    }
-                array[nextIndex!!] = element
-            }
+            val index = findEntryIndexByKey(element.key)
+            if (array[index] != null && array[index] != DELETED) return false
+            array[index] = element
             if (++size == array.size) increaseArray()
             return true
+        }
+
+        private fun findEntryIndexByKey(key: K): Int {
+            var i = indexFor(key?.hashCode(), size)
+            var firstDeleted: Int? = null
+            while (true) {
+                if (array[i] == null) {
+                    if (firstDeleted != null) i = firstDeleted
+                    break
+                }
+                if (array[i] == DELETED) {
+                    if (firstDeleted == null) firstDeleted = i
+                    continue
+                }
+                val currentElement = array[i] as MutableMap.MutableEntry<K, V>
+                if (currentElement.key?.equals(key) ?: (key == null)) break
+                i++
+            }
+            return i
         }
 
         private fun increaseArray() {
             val oldArray = array
             array = Array(array.size * 2) { null }
             size = 0
-            oldArray.forEach { add(it!!) }
+            oldArray.forEach { add(it as MutableMap.MutableEntry<K, V>) }
         }
 
         override fun iterator(): HashMutableIterator = HashMutableIterator()
 
         inner class HashMutableIterator : MutableIterator<MutableMap.MutableEntry<K, V>> {
-            var pointer: Int = -1
+            private var pointer: Int = -1
 
             override fun hasNext(): Boolean {
                 val nextPointer = pointer + 1
                 if (nextPointer < array.size)
                     for (i in nextPointer until array.size)
-                        if (array[i] != null) return true
+                        if (array[i] != null && array[i] != DELETED) return true
                 return false
             }
 
             override fun next(): MutableMap.MutableEntry<K, V> {
                 for (i in pointer + 1 until array.size) {
-                    if (array[i] != null) {
+                    if (array[i] != null && array[i] != DELETED) {
                         pointer = i
-                        return array[i]!!
+                        return array[i] as MutableMap.MutableEntry<K, V>
                     }
                 }
                 throw ArrayIndexOutOfBoundsException()
             }
 
             override fun remove() {
-                array[pointer] = null
+                array[pointer] = DELETED
             }
         }
     }
