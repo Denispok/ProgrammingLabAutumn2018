@@ -5,7 +5,7 @@ class HashMap<K, V> : MutableMap<K, V> {
     }
 
     override val size: Int
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() = entries.size
 
     override fun containsKey(key: K): Boolean {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -23,12 +23,19 @@ class HashMap<K, V> : MutableMap<K, V> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    override val entries: MutableSet<MutableMap.MutableEntry<K, V>> = HashEntrySet()
     override val keys: MutableSet<K>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() {
+            val set = mutableSetOf<K>()
+            for (i in entries) set.add(i.key)
+            return set
+        }
     override val values: MutableCollection<V>
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+        get() {
+            val set = mutableSetOf<V>()
+            for (i in entries) set.add(i.value)
+            return set
+        }
 
     override fun clear() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -46,26 +53,28 @@ class HashMap<K, V> : MutableMap<K, V> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    inner class HashEntrySet : AbstractMutableSet<HashEntry<K, V>>() {
-        override var size: Int = 0
-        var array: Array<HashEntry<K, V>?> = Array(MIN_SIZE) { null }
+    private fun indexFor(hash: Int?, size: Int): Int = if (hash == null) 0 else hash and (size - 1)
 
-        override fun add(element: HashEntry<K, V>): Boolean {
-            val index = indexFor(element.hash, array.size)
+    inner class HashEntrySet : AbstractMutableSet<MutableMap.MutableEntry<K, V>>() {
+        override var size: Int = 0
+        var array: Array<MutableMap.MutableEntry<K, V>?> = Array(MIN_SIZE) { null }
+
+        override fun add(element: MutableMap.MutableEntry<K, V>): Boolean {
+            val index = indexFor(element.key?.hashCode(), array.size)
             if (array[index] == null) array[index] = element
             else {
                 var nextIndex: Int? = null
                 for (i in index until array.size) {
                     val currentElement = array[i]
                     if (currentElement == null) nextIndex = i
-                    else if (currentElement.hash == element.hash && currentElement.key?.equals(element.key) ?: (element.key == null))
+                    else if (currentElement.key?.hashCode() == element.key?.hashCode() && currentElement.key?.equals(element.key) ?: (element.key == null))
                         return false
                 }
                 if (nextIndex == null)
                     for (i in 0 until index) {
                         val currentElement = array[i]
                         if (currentElement == null) nextIndex = i
-                        else if (currentElement.hash == element.hash && currentElement.key?.equals(element.key) ?: (element.key == null))
+                        else if (currentElement.key?.hashCode() == element.key?.hashCode() && currentElement.key?.equals(element.key) ?: (element.key == null))
                             return false
                     }
                 array[nextIndex!!] = element
@@ -73,8 +82,6 @@ class HashMap<K, V> : MutableMap<K, V> {
             if (++size == array.size) increaseArray()
             return true
         }
-
-        private fun indexFor(hash: Int, size: Int): Int = hash and (size - 1)
 
         private fun increaseArray() {
             val oldArray = array
@@ -85,7 +92,7 @@ class HashMap<K, V> : MutableMap<K, V> {
 
         override fun iterator(): HashMutableIterator = HashMutableIterator()
 
-        inner class HashMutableIterator : MutableIterator<HashEntry<K, V>> {
+        inner class HashMutableIterator : MutableIterator<MutableMap.MutableEntry<K, V>> {
             var pointer: Int = -1
 
             override fun hasNext(): Boolean {
@@ -96,7 +103,7 @@ class HashMap<K, V> : MutableMap<K, V> {
                 return false
             }
 
-            override fun next(): HashEntry<K, V> {
+            override fun next(): MutableMap.MutableEntry<K, V> {
                 for (i in pointer + 1 until array.size) {
                     if (array[i] != null) {
                         pointer = i
@@ -113,7 +120,6 @@ class HashMap<K, V> : MutableMap<K, V> {
     }
 
     inner class HashEntry<K, V>(override val key: K, override var value: V) : MutableMap.MutableEntry<K, V> {
-        val hash = key?.hashCode() ?: 0
         override fun setValue(newValue: V): V {
             val oldValue = value
             value = newValue
