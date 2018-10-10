@@ -17,14 +17,16 @@ class HashMap<K, V> : MutableMap<K, V> {
     }
 
     override fun get(key: K): V? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val entry = entries.array[entries.findEntryIndexByKey(key)]
+        if (entry == null || entry == DELETED) return null
+        return (entry as MutableMap.MutableEntry<K, V>).value
     }
 
     override fun isEmpty(): Boolean {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override val entries: MutableSet<MutableMap.MutableEntry<K, V>> = HashEntrySet()
+    override val entries: HashEntrySet = HashEntrySet()
     override val keys: MutableSet<K>
         get() {
             val set = mutableSetOf<K>()
@@ -43,7 +45,9 @@ class HashMap<K, V> : MutableMap<K, V> {
     }
 
     override fun put(key: K, value: V): V? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val previous = get(key)
+        entries.add(HashEntry(key, value))
+        return previous
     }
 
     override fun putAll(from: Map<out K, V>) {
@@ -62,13 +66,15 @@ class HashMap<K, V> : MutableMap<K, V> {
 
         override fun add(element: MutableMap.MutableEntry<K, V>): Boolean {
             val index = findEntryIndexByKey(element.key)
-            if (array[index] != null && array[index] != DELETED) return false
+            if (array[index] != null && array[index] != DELETED) {
+                if ((array[index] as MutableMap.MutableEntry<K, V>).value == element.value) return false
+            } else size++
             array[index] = element
-            if (++size == array.size) increaseArray()
+            if (size == array.size) increaseArray()
             return true
         }
 
-        private fun findEntryIndexByKey(key: K): Int {
+        fun findEntryIndexByKey(key: K): Int {
             var i = indexFor(key?.hashCode(), size)
             var firstDeleted: Int? = null
             while (true) {
