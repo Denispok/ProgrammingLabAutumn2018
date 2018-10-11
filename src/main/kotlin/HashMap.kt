@@ -60,7 +60,7 @@ class HashMap<K, V> : MutableMap<K, V> {
         val previous = (entries.array[index] as MutableMap.MutableEntry<K, V>).value
         entries.array[index] = DELETED
         entries.size--
-        return previous as V
+        return previous
     }
 
     inner class HashEntrySet : AbstractMutableSet<MutableMap.MutableEntry<K, V>>() {
@@ -88,6 +88,7 @@ class HashMap<K, V> : MutableMap<K, V> {
                 }
                 if (array[i] == DELETED) {
                     if (firstDeleted == null) firstDeleted = i
+                    if (i + 1 == array.size) i = 0 else i++
                     continue
                 }
                 val currentElement = array[i] as MutableMap.MutableEntry<K, V>
