@@ -55,10 +55,13 @@ class HashMap<K, V> : MutableMap<K, V> {
     }
 
     override fun remove(key: K): V? {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val index = entries.findEntryIndexByKey(key)
+        if (entries.array[index] == null || entries.array[index] == DELETED) return null
+        val previous = (entries.array[index] as MutableMap.MutableEntry<K, V>).value
+        entries.array[index] = DELETED
+        entries.size--
+        return previous as V
     }
-
-    private fun indexFor(hash: Int?, size: Int): Int = if (hash == null) 0 else hash and (size - 1)
 
     inner class HashEntrySet : AbstractMutableSet<MutableMap.MutableEntry<K, V>>() {
         override var size: Int = 0
@@ -75,9 +78,10 @@ class HashMap<K, V> : MutableMap<K, V> {
         }
 
         fun findEntryIndexByKey(key: K): Int {
-            var i = indexFor(key?.hashCode(), size)
+            val firstIndex = indexFor(key?.hashCode())
+            var i = firstIndex
             var firstDeleted: Int? = null
-            while (true) {
+            do {
                 if (array[i] == null) {
                     if (firstDeleted != null) i = firstDeleted
                     break
@@ -88,10 +92,12 @@ class HashMap<K, V> : MutableMap<K, V> {
                 }
                 val currentElement = array[i] as MutableMap.MutableEntry<K, V>
                 if (currentElement.key?.equals(key) ?: (key == null)) break
-                i++
-            }
+                if (i + 1 == array.size) i = 0 else i++
+            } while (i != firstIndex)
             return i
         }
+
+        private fun indexFor(hash: Int?): Int = if (hash == null) 0 else hash and (array.size - 1)
 
         private fun increaseArray() {
             val oldArray = array
