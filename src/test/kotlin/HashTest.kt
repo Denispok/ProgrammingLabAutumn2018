@@ -9,9 +9,11 @@ class HashTest {
         for (i in 1..40) map["$i"] = (i * i).toString()
         for (i in 1..20) map.remove("$i")
         assertEquals(20, map.size)
-        for (i in 21..40) {
-            assertEquals((i * i).toString(), map["$i"])
-        }
+        for (i in 21..40) assertEquals((i * i).toString(), map["$i"])
+        map.clear()
+        assertEquals(0, map.size)
+        for (i in 1..40) map["$i"] = (i * i).toString()
+        for (i in 1..40) assertEquals((i * i).toString(), map["$i"])
     }
 
     @Test
@@ -26,6 +28,19 @@ class HashTest {
         map[1] = "one"
         assertEquals("one", map.put(1, "another one"))
         assertEquals("another one", map[1])
+    }
+
+    @Test
+    fun containsTest() {
+        val map = HashMap<Int?, Int?>()
+        assertEquals(false, map.containsKey(null))
+        map.put(null, 10)
+        assertEquals(true, map.containsKey(null))
+        assertEquals(false, map.containsValue(null))
+        map.put(null, null)
+        assertEquals(true, map.containsValue(null))
+        map.remove(null)
+        assertEquals(false, map.containsKey(null))
     }
 
     @Test

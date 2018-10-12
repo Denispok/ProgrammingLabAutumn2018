@@ -8,13 +8,9 @@ class HashMap<K, V> : MutableMap<K, V> {
     override val size: Int
         get() = entries.size
 
-    override fun containsKey(key: K): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun containsKey(key: K): Boolean = keys.contains(key)
 
-    override fun containsValue(value: V): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun containsValue(value: V): Boolean = values.contains(value)
 
     override fun get(key: K): V? {
         val entry = entries.array[entries.findEntryIndexByKey(key)]
@@ -22,9 +18,7 @@ class HashMap<K, V> : MutableMap<K, V> {
         return (entry as MutableMap.MutableEntry<K, V>).value
     }
 
-    override fun isEmpty(): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun isEmpty(): Boolean = size == 0
 
     override val entries: HashEntrySet = HashEntrySet()
     override val keys: MutableSet<K>
@@ -41,7 +35,7 @@ class HashMap<K, V> : MutableMap<K, V> {
         }
 
     override fun clear() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        entries.clear()
     }
 
     override fun put(key: K, value: V): V? {
@@ -97,6 +91,11 @@ class HashMap<K, V> : MutableMap<K, V> {
                 if (i + 1 == array.size) i = 0 else i++
             } while (i != firstIndex)
             return i
+        }
+
+        override fun clear() {
+            array = Array(MIN_SIZE) { null }
+            size = 0
         }
 
         private fun indexFor(hash: Int?): Int = if (hash == null) 0 else hash and (array.size - 1)
