@@ -51,7 +51,8 @@ class HashMap<K, V> : MutableMap<K, V> {
     }
 
     override fun putAll(from: Map<out K, V>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        entries.increaseArrayTo(from.size)
+        from.entries.forEach { put(it.key, it.value) }
     }
 
     override fun remove(key: K): V? {
@@ -73,7 +74,7 @@ class HashMap<K, V> : MutableMap<K, V> {
                 if ((array[index] as MutableMap.MutableEntry<K, V>).value == element.value) return false
             } else size++
             array[index] = element
-            if (size == array.size) increaseArray()
+            if (size == array.size) increaseArray(2)
             return true
         }
 
@@ -100,11 +101,19 @@ class HashMap<K, V> : MutableMap<K, V> {
 
         private fun indexFor(hash: Int?): Int = if (hash == null) 0 else hash and (array.size - 1)
 
-        private fun increaseArray() {
+        private fun increaseArray(multiplier: Int) {
             val oldArray = array
-            array = Array(array.size * 2) { null }
+            array = Array(array.size * multiplier) { null }
             size = 0
-            oldArray.forEach { add(it as MutableMap.MutableEntry<K, V>) }
+            oldArray.forEach { if (it != null && it != DELETED) add(it as MutableMap.MutableEntry<K, V>) }
+        }
+
+        fun increaseArrayTo(size: Int) {
+            if (size > array.size) {
+                var newSize = MIN_SIZE
+                while (newSize < size) newSize *= 2
+                increaseArray(newSize / array.size)
+            }
         }
 
         override fun iterator(): HashMutableIterator = HashMutableIterator()
