@@ -1,7 +1,7 @@
 class HashMap<K, V> : MutableMap<K, V> {
 
     companion object {
-        const val MIN_SIZE = 16
+        const val INITIAL_SIZE = 16
         const val DELETED = true
     }
 
@@ -21,18 +21,8 @@ class HashMap<K, V> : MutableMap<K, V> {
     override fun isEmpty(): Boolean = size == 0
 
     override val entries: HashEntrySet = HashEntrySet()
-    override val keys: MutableSet<K>
-        get() {
-            val set = mutableSetOf<K>()
-            for (i in entries) set.add(i.key)
-            return set
-        }
-    override val values: MutableCollection<V>
-        get() {
-            val set = mutableSetOf<V>()
-            for (i in entries) set.add(i.value)
-            return set
-        }
+    override val keys: MutableSet<K> = mutableSetOf()
+    override val values: MutableCollection<V> = mutableListOf()
 
     override fun clear() {
         entries.clear()
@@ -41,18 +31,26 @@ class HashMap<K, V> : MutableMap<K, V> {
     override fun put(key: K, value: V): V? {
         val previous = get(key)
         entries.add(HashEntry(key, value))
+        keys.add(key)
+        values.add(value)
         return previous
     }
 
     override fun putAll(from: Map<out K, V>) {
         entries.increaseArrayTo(from.size)
-        from.entries.forEach { put(it.key, it.value) }
+        from.entries.forEach {
+            put(it.key, it.value)
+            keys.add(it.key)
+            values.add(it.value)
+        }
     }
 
     override fun remove(key: K): V? {
         val index = entries.findEntryIndexByKey(key)
         if (entries.array[index] == null || entries.array[index] == DELETED) return null
         val previous = (entries.array[index] as MutableMap.MutableEntry<K, V>).value
+        keys.remove(key)
+        values.remove(previous)
         entries.array[index] = DELETED
         entries.size--
         return previous
@@ -60,13 +58,15 @@ class HashMap<K, V> : MutableMap<K, V> {
 
     inner class HashEntrySet : AbstractMutableSet<MutableMap.MutableEntry<K, V>>() {
         override var size: Int = 0
-        var array: Array<Any?> = Array(MIN_SIZE) { null }
+        var array: Array<Any?> = Array(INITIAL_SIZE) { null }
 
         override fun add(element: MutableMap.MutableEntry<K, V>): Boolean {
             val index = findEntryIndexByKey(element.key)
             if (array[index] != null && array[index] != DELETED) {
                 if ((array[index] as MutableMap.MutableEntry<K, V>).value == element.value) return false
             } else size++
+            keys.add(element.key)
+            values.add(element.value)
             array[index] = element
             if (size == array.size) increaseArray(2)
             return true
@@ -94,7 +94,9 @@ class HashMap<K, V> : MutableMap<K, V> {
         }
 
         override fun clear() {
-            array = Array(MIN_SIZE) { null }
+            array = Array(INITIAL_SIZE) { null }
+            keys.clear()
+            values.clear()
             size = 0
         }
 
@@ -109,7 +111,7 @@ class HashMap<K, V> : MutableMap<K, V> {
 
         fun increaseArrayTo(size: Int) {
             if (size > array.size) {
-                var newSize = MIN_SIZE
+                var newSize = INITIAL_SIZE
                 while (newSize < size) newSize *= 2
                 increaseArray(newSize / array.size)
             }
@@ -139,6 +141,9 @@ class HashMap<K, V> : MutableMap<K, V> {
             }
 
             override fun remove() {
+                val previous = array[pointer] as MutableMap.MutableEntry<K, V>
+                keys.remove(previous.key)
+                values.remove(previous.value)
                 array[pointer] = DELETED
             }
         }
