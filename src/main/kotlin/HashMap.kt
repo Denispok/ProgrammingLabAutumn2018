@@ -31,8 +31,6 @@ class HashMap<K, V> : MutableMap<K, V> {
     override fun put(key: K, value: V): V? {
         val previous = get(key)
         entries.add(HashEntry(key, value))
-        keys.add(key)
-        values.add(value)
         return previous
     }
 
@@ -40,8 +38,6 @@ class HashMap<K, V> : MutableMap<K, V> {
         entries.increaseArrayTo(from.size)
         from.entries.forEach {
             put(it.key, it.value)
-            keys.add(it.key)
-            values.add(it.value)
         }
     }
 
@@ -49,8 +45,6 @@ class HashMap<K, V> : MutableMap<K, V> {
         val index = entries.findEntryIndexByKey(key)
         if (entries.array[index] == null || entries.array[index] == DELETED) return null
         val previous = (entries.array[index] as MutableMap.MutableEntry<K, V>).value
-        keys.remove(key)
-        values.remove(previous)
         entries.array[index] = DELETED
         entries.size--
         return previous
@@ -65,8 +59,6 @@ class HashMap<K, V> : MutableMap<K, V> {
             if (array[index] != null && array[index] != DELETED) {
                 if ((array[index] as MutableMap.MutableEntry<K, V>).value == element.value) return false
             } else size++
-            keys.add(element.key)
-            values.add(element.value)
             array[index] = element
             if (size == array.size) increaseArray(2)
             return true
@@ -95,8 +87,6 @@ class HashMap<K, V> : MutableMap<K, V> {
 
         override fun clear() {
             array = Array(INITIAL_SIZE) { null }
-            keys.clear()
-            values.clear()
             size = 0
         }
 
@@ -142,8 +132,6 @@ class HashMap<K, V> : MutableMap<K, V> {
 
             override fun remove() {
                 val previous = array[pointer] as MutableMap.MutableEntry<K, V>
-                keys.remove(previous.key)
-                values.remove(previous.value)
                 array[pointer] = DELETED
             }
         }
