@@ -21,8 +21,8 @@ class HashMap<K, V> : MutableMap<K, V> {
     override fun isEmpty(): Boolean = size == 0
 
     override val entries: HashEntrySet = HashEntrySet()
-    override val keys: MutableSet<K> = mutableSetOf()
-    override val values: MutableCollection<V> = mutableListOf()
+    override val keys: MutableSet<K> = HashKeysSet()
+    override val values: MutableCollection<V> = HashValuesCollection()
 
     override fun clear() {
         entries.clear()
@@ -154,6 +154,44 @@ class HashMap<K, V> : MutableMap<K, V> {
             val oldValue = value
             value = newValue
             return oldValue
+        }
+    }
+
+    inner class HashKeysSet : AbstractMutableSet<K>() {
+        override val size: Int
+            get() = entries.size
+
+        override fun add(element: K): Boolean {
+            throw UnsupportedOperationException()
+        }
+
+        override fun iterator(): MutableIterator<K> = object : MutableIterator<K> {
+            val entrySetIterator = entries.iterator()
+
+            override fun hasNext(): Boolean = entrySetIterator.hasNext()
+
+            override fun next(): K = entrySetIterator.next().key
+
+            override fun remove() = entrySetIterator.remove()
+        }
+    }
+
+    inner class HashValuesCollection : AbstractMutableCollection<V>() {
+        override val size: Int
+            get() = entries.size
+
+        override fun add(element: V): Boolean {
+            throw UnsupportedOperationException()
+        }
+
+        override fun iterator(): MutableIterator<V> = object : MutableIterator<V> {
+            val entrySetIterator = entries.iterator()
+
+            override fun hasNext(): Boolean = entrySetIterator.hasNext()
+
+            override fun next(): V = entrySetIterator.next().value
+
+            override fun remove() = entrySetIterator.remove()
         }
     }
 }
