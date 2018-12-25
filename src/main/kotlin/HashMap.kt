@@ -130,7 +130,6 @@ class HashMap<K, V> : MutableMap<K, V> {
             }
 
             override fun remove() {
-                val previous = array[pointer] as MutableMap.MutableEntry<K, V>
                 array[pointer] = DELETED
             }
         }
