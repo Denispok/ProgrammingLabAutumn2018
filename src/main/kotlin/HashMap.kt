@@ -114,9 +114,8 @@ class HashMap<K, V> : MutableMap<K, V> {
 
             override fun hasNext(): Boolean {
                 val nextPointer = pointer + 1
-                if (nextPointer < array.size)
-                    for (i in nextPointer until array.size)
-                        if (array[i] != null && array[i] != DELETED) return true
+                for (i in nextPointer until array.size)
+                    if (array[i] != null && array[i] != DELETED) return true
                 return false
             }
 
