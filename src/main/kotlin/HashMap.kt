@@ -131,6 +131,7 @@ class HashMap<K, V> : MutableMap<K, V> {
 
             override fun remove() {
                 array[pointer] = DELETED
+                size--
             }
         }
     }
